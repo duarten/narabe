@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+.sprite
+server/data/
+server/data-test/
+test-results/
+playwright-report/

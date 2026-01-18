@@ -1,0 +1,29 @@
+{
+  "name": "narabe",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "vite",
+    "build": "vite build",
+    "start": "NODE_ENV=production PORT=8080 node server/index.js",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@thisbeyond/solid-dnd": "^0.7.5",
+    "concurrently": "^9.1.0",
+    "solid-js": "^1.9.3",
+    "vite": "^6.0.0",
+    "vite-plugin-solid": "^2.10.2"
+  }
+}
