@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, For, Show, onMount } from 'solid-js';
+import { createSignal, createEffect, createMemo, For, Show, onMount, batch } from 'solid-js';
 import {
   DragDropProvider,
   DragDropSensors,
@@ -82,8 +82,10 @@ function SentenceBoard(props) {
   createEffect(() => {
     const sentence = props.sentence;
     if (sentence?.words && sentence.original !== shuffledSentence()) {
-      setShuffledSentence(sentence.original);
-      setWordOrder(shuffleIndices(sentence.words.length));
+      batch(() => {
+        setShuffledSentence(sentence.original);
+        setWordOrder(shuffleIndices(sentence.words.length));
+      });
     }
   });
 
