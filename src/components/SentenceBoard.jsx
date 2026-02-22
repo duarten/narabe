@@ -63,9 +63,9 @@ function SentenceBoard(props) {
   const [dropTargetId, setDropTargetId] = createSignal(null);
   const [shuffledSentence, setShuffledSentence] = createSignal(null);
 
-  // Fisher-Yates shuffle, ensuring we don't end up with correct order
-  const shuffleIndices = (length) => {
-    const indices = Array.from({ length }, (_, i) => i);
+  // Fisher-Yates shuffle, ensuring we don't end up with a visually correct order
+  const shuffleIndices = (words) => {
+    const indices = Array.from({ length: words.length }, (_, i) => i);
 
     const shuffle = (arr) => {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -75,12 +75,13 @@ function SentenceBoard(props) {
       return arr;
     };
 
-    // Keep shuffling until we get an order that's not correct
+    // Keep shuffling until we get an order that's not visually correct
+    // (comparing word text so duplicate words are treated as interchangeable)
     let shuffled = shuffle([...indices]);
     let attempts = 0;
     while (
-      shuffled.every((val, idx) => val === idx) &&
-      length > 1 &&
+      shuffled.every((val, idx) => words[val].word === words[idx].word) &&
+      words.length > 1 &&
       attempts < 10
     ) {
       shuffled = shuffle([...indices]);
@@ -96,7 +97,7 @@ function SentenceBoard(props) {
     if (sentence?.words && sentence.original !== shuffledSentence()) {
       batch(() => {
         setShuffledSentence(sentence.original);
-        setWordOrder(shuffleIndices(sentence.words.length));
+        setWordOrder(shuffleIndices(sentence.words));
       });
     }
   });
@@ -122,7 +123,10 @@ function SentenceBoard(props) {
     if (props.sentence.original !== shuffledSentence()) return false;
     const order = wordOrder();
     if (order.length !== props.sentence.words.length) return false;
-    return order.every((val, idx) => val === idx);
+    return order.every(
+      (val, idx) =>
+        props.sentence.words[val].word === props.sentence.words[idx].word,
+    );
   });
 
   // Auto-detect correct answer
