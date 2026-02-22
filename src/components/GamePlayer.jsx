@@ -22,16 +22,16 @@ function GamePlayer(props) {
 
   const handleCorrect = () => {
     setSentenceState('correct');
-    setCorrectCount(c => c + 1);
+    setCorrectCount((c) => c + 1);
   };
 
   const handleGiveUp = () => {
     setSentenceState('skipped');
-    setSkippedCount(c => c + 1);
+    setSkippedCount((c) => c + 1);
   };
 
   const handleNext = () => {
-    setCurrentIndex(i => i + 1);
+    setCurrentIndex((i) => i + 1);
     setSentenceState('playing');
     setShowReadings(false);
     setShowMeanings(false);
@@ -58,7 +58,9 @@ function GamePlayer(props) {
 
       <Show when={!isGameComplete()}>
         <div class="game-status">
-          <span>Sentence {currentIndex() + 1} / {props.game?.sentences?.length}</span>
+          <span>
+            Sentence {currentIndex() + 1} / {props.game?.sentences?.length}
+          </span>
           <span class="score">
             Correct: {correctCount()} | Skipped: {skippedCount()}
           </span>

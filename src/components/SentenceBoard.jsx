@@ -1,4 +1,12 @@
-import { createSignal, createEffect, createMemo, For, Show, onMount, batch } from 'solid-js';
+import {
+  createSignal,
+  createEffect,
+  createMemo,
+  For,
+  Show,
+  onMount,
+  batch,
+} from 'solid-js';
 import {
   DragDropProvider,
   DragDropSensors,
@@ -6,7 +14,7 @@ import {
   SortableProvider,
   createSortable,
   createDroppable,
-  closestCenter
+  closestCenter,
 } from '@thisbeyond/solid-dnd';
 
 function SortableWord(props) {
@@ -17,9 +25,9 @@ function SortableWord(props) {
       ref={sortable.ref}
       class="word-tile"
       classList={{
-        'dragging': sortable.isActiveDraggable,
+        dragging: sortable.isActiveDraggable,
         'drop-target': props.isDropTarget,
-        'with-hints': props.showReadings || props.showMeanings
+        'with-hints': props.showReadings || props.showMeanings,
       }}
       {...sortable.dragActivators}
     >
@@ -43,7 +51,7 @@ function EndDropZone(props) {
       class="end-drop-zone"
       classList={{
         'drop-target': props.isDropTarget,
-        'visible': props.isDragging
+        visible: props.isDragging,
       }}
     />
   );
@@ -70,7 +78,11 @@ function SentenceBoard(props) {
     // Keep shuffling until we get an order that's not correct
     let shuffled = shuffle([...indices]);
     let attempts = 0;
-    while (shuffled.every((val, idx) => val === idx) && length > 1 && attempts < 10) {
+    while (
+      shuffled.every((val, idx) => val === idx) &&
+      length > 1 &&
+      attempts < 10
+    ) {
       shuffled = shuffle([...indices]);
       attempts++;
     }
@@ -98,7 +110,10 @@ function SentenceBoard(props) {
 
   const orderedWords = createMemo(() => {
     if (!props.sentence?.words) return [];
-    return wordOrder().map(i => ({ ...props.sentence.words[i], originalIndex: i }));
+    return wordOrder().map((i) => ({
+      ...props.sentence.words[i],
+      originalIndex: i,
+    }));
   });
 
   const isCorrect = createMemo(() => {
@@ -163,8 +178,8 @@ function SentenceBoard(props) {
     <div
       class="sentence-board"
       classList={{
-        'correct': props.state === 'correct',
-        'skipped': props.state === 'skipped'
+        correct: props.state === 'correct',
+        skipped: props.state === 'skipped',
       }}
     >
       <DragDropProvider
@@ -183,7 +198,10 @@ function SentenceBoard(props) {
                   word={word}
                   showReadings={props.showReadings}
                   showMeanings={props.showMeanings}
-                  isDropTarget={dropTargetId() === word.originalIndex && activeId() !== word.originalIndex}
+                  isDropTarget={
+                    dropTargetId() === word.originalIndex &&
+                    activeId() !== word.originalIndex
+                  }
                 />
               )}
             </For>

@@ -42,7 +42,9 @@ test.describe('Game Creation', () => {
     await page.locator('#sentences').fill('私は学生です');
     await page.locator('.submit-btn').click();
 
-    await expect(page.locator('.error-message')).toContainText('Please enter a game name');
+    await expect(page.locator('.error-message')).toContainText(
+      'Please enter a game name',
+    );
   });
 
   test('shows validation error for empty sentences', async ({ page }) => {
@@ -52,7 +54,9 @@ test.describe('Game Creation', () => {
     await page.locator('#game-name').fill('Test Game');
     await page.locator('.submit-btn').click();
 
-    await expect(page.locator('.error-message')).toContainText('Please enter at least one sentence');
+    await expect(page.locator('.error-message')).toContainText(
+      'Please enter at least one sentence',
+    );
   });
 
   test('processes sentences and shows progress', async ({ page }) => {
@@ -65,11 +69,19 @@ test.describe('Game Creation', () => {
         body: JSON.stringify({
           original: body.sentence,
           words: [
-            { word: body.sentence.slice(0, 2), reading: body.sentence.slice(0, 2), meaning: 'word 1' },
-            { word: body.sentence.slice(2), reading: body.sentence.slice(2), meaning: 'word 2' }
+            {
+              word: body.sentence.slice(0, 2),
+              reading: body.sentence.slice(0, 2),
+              meaning: 'word 1',
+            },
+            {
+              word: body.sentence.slice(2),
+              reading: body.sentence.slice(2),
+              meaning: 'word 2',
+            },
           ],
-          grammarBreakdown: 'Test grammar breakdown'
-        })
+          grammarBreakdown: 'Test grammar breakdown',
+        }),
       });
     });
 
@@ -92,9 +104,11 @@ test.describe('Game Creation', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           original: body.sentence,
-          words: [{ word: body.sentence, reading: body.sentence, meaning: 'test' }],
-          grammarBreakdown: 'Grammar'
-        })
+          words: [
+            { word: body.sentence, reading: body.sentence, meaning: 'test' },
+          ],
+          grammarBreakdown: 'Grammar',
+        }),
       });
     });
 
@@ -118,7 +132,7 @@ test.describe('Game Creation', () => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
-        body: JSON.stringify({ error: 'API Error' })
+        body: JSON.stringify({ error: 'API Error' }),
       });
     });
 
@@ -130,7 +144,9 @@ test.describe('Game Creation', () => {
     await page.locator('.submit-btn').click();
 
     // Should show error message and not save the game
-    await expect(page.locator('.error-message')).toContainText('failed to process');
+    await expect(page.locator('.error-message')).toContainText(
+      'failed to process',
+    );
     await expect(page.locator('.game-creator')).toBeVisible();
   });
 });

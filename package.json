@@ -10,7 +10,9 @@
     "start": "NODE_ENV=production PORT=8080 node server/index.js",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "test:headed": "playwright test --headed"
+    "test:headed": "playwright test --headed",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -22,6 +24,7 @@
     "@playwright/test": "^1.49.0",
     "@thisbeyond/solid-dnd": "^0.7.5",
     "concurrently": "^9.1.0",
+    "prettier": "3.8.1",
     "solid-js": "^1.9.3",
     "vite": "^6.0.0",
     "vite-plugin-solid": "^2.10.2"

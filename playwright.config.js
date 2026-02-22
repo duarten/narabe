@@ -19,8 +19,8 @@ export default defineConfig({
       env: {
         ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || 'test-key',
         DATA_DIR: 'data-test',
-        PORT: '3002'
-      }
+        PORT: '3002',
+      },
     },
     {
       command: 'npx vite',
@@ -28,9 +28,9 @@ export default defineConfig({
       reuseExistingServer: false,
       env: {
         VITE_PORT: '3004',
-        API_PORT: '3002'
-      }
-    }
+        API_PORT: '3002',
+      },
+    },
   ],
   projects: [
     {

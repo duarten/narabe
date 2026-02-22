@@ -16,7 +16,7 @@ export async function saveGame(game) {
   const res = await fetch(`${API_BASE}/games`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(game)
+    body: JSON.stringify(game),
   });
   if (!res.ok) throw new Error('Failed to save game');
   return res.json();
@@ -24,7 +24,7 @@ export async function saveGame(game) {
 
 export async function deleteGame(filename) {
   const res = await fetch(`${API_BASE}/games/${encodeURIComponent(filename)}`, {
-    method: 'DELETE'
+    method: 'DELETE',
   });
   if (!res.ok) throw new Error('Failed to delete game');
   return res.json();
@@ -34,7 +34,7 @@ export async function processSentence(sentence) {
   const res = await fetch(`${API_BASE}/process-sentence`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sentence })
+    body: JSON.stringify({ sentence }),
   });
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Unknown error' }));
@@ -61,7 +61,7 @@ export async function processSentences(sentences, concurrency = 4, onProgress) {
           original: sentence,
           error: err.message,
           words: [],
-          grammarBreakdown: 'Error processing sentence'
+          grammarBreakdown: 'Error processing sentence',
         };
       }
 

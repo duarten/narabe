@@ -16,8 +16,8 @@ function GameCreator(props) {
     const name = gameName().trim();
     const sentenceList = sentences()
       .split('\n')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
 
     if (!name) {
       setError('Please enter a game name');
@@ -34,19 +34,25 @@ function GameCreator(props) {
     setProcessedSentences([]);
 
     try {
-      const results = await processSentences(sentenceList, 4, (completed, total, index, result) => {
-        setProgress({ completed, total });
-        setProcessedSentences(prev => {
-          const newArr = [...prev];
-          newArr[index] = result;
-          return newArr;
-        });
-      });
+      const results = await processSentences(
+        sentenceList,
+        4,
+        (completed, total, index, result) => {
+          setProgress({ completed, total });
+          setProcessedSentences((prev) => {
+            const newArr = [...prev];
+            newArr[index] = result;
+            return newArr;
+          });
+        },
+      );
 
       // Check if any sentences had errors
-      const failedCount = results.filter(r => r.error).length;
+      const failedCount = results.filter((r) => r.error).length;
       if (failedCount > 0) {
-        setError(`${failedCount} sentence(s) failed to process. Please check your API key and try again.`);
+        setError(
+          `${failedCount} sentence(s) failed to process. Please check your API key and try again.`,
+        );
         setProcessing(false);
         return;
       }
@@ -54,7 +60,7 @@ function GameCreator(props) {
       // Save the game
       const game = {
         name,
-        sentences: results
+        sentences: results,
       };
 
       await saveGame(game);
@@ -112,10 +118,14 @@ function GameCreator(props) {
           <div class="progress-bar">
             <div
               class="progress-fill"
-              style={{ width: `${(progress().completed / progress().total) * 100}%` }}
+              style={{
+                width: `${(progress().completed / progress().total) * 100}%`,
+              }}
             />
           </div>
-          <p>Processing sentences: {progress().completed} / {progress().total}</p>
+          <p>
+            Processing sentences: {progress().completed} / {progress().total}
+          </p>
 
           <div class="processed-list">
             <For each={processedSentences()}>

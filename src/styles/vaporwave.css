@@ -108,7 +108,9 @@ button {
 button:hover:not(:disabled) {
   background: var(--cyan);
   color: var(--dark-purple);
-  box-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(1, 205, 254, 0.3);
+  box-shadow:
+    0 0 20px var(--cyan),
+    0 0 40px rgba(1, 205, 254, 0.3);
 }
 
 button:disabled {
@@ -210,8 +212,12 @@ button:disabled {
 }
 
 @keyframes pulse {
-  from { box-shadow: 0 0 5px rgba(255, 100, 100, 0.3); }
-  to { box-shadow: 0 0 15px rgba(255, 100, 100, 0.6); }
+  from {
+    box-shadow: 0 0 5px rgba(255, 100, 100, 0.3);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(255, 100, 100, 0.6);
+  }
 }
 
 .create-btn {
@@ -431,7 +437,11 @@ button:disabled {
   flex-direction: column;
   align-items: center;
   padding: 12px 20px;
-  background: linear-gradient(135deg, rgba(185, 103, 255, 0.3), rgba(255, 113, 206, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(185, 103, 255, 0.3),
+    rgba(255, 113, 206, 0.3)
+  );
   border: 1px solid var(--purple);
   border-radius: 8px;
   cursor: grab;
@@ -466,7 +476,11 @@ button:disabled {
   top: 0;
   bottom: 0;
   width: 40px;
-  background: linear-gradient(135deg, rgba(1, 205, 254, 0.3), rgba(5, 255, 161, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(1, 205, 254, 0.3),
+    rgba(5, 255, 161, 0.3)
+  );
   border: 2px dashed var(--cyan);
   border-radius: 8px;
   animation: pulse-drop 0.5s ease-in-out infinite alternate;
@@ -501,7 +515,11 @@ button:disabled {
 
 .end-drop-zone.drop-target {
   opacity: 1;
-  background: linear-gradient(135deg, rgba(1, 205, 254, 0.3), rgba(5, 255, 161, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(1, 205, 254, 0.3),
+    rgba(5, 255, 161, 0.3)
+  );
   border: 2px dashed var(--cyan);
   animation: pulse-drop 0.5s ease-in-out infinite alternate;
 }

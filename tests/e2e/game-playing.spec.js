@@ -38,9 +38,10 @@ async function createPlayableGame() {
           { word: '私', reading: 'わたし', meaning: 'I' },
           { word: 'は', reading: 'は', meaning: 'topic marker' },
           { word: '学生', reading: 'がくせい', meaning: 'student' },
-          { word: 'です', reading: 'です', meaning: 'is/am' }
+          { word: 'です', reading: 'です', meaning: 'is/am' },
         ],
-        grammarBreakdown: 'This is a basic self-introduction sentence using は to mark the topic.'
+        grammarBreakdown:
+          'This is a basic self-introduction sentence using は to mark the topic.',
       },
       {
         original: '今日は天気がいい',
@@ -49,11 +50,11 @@ async function createPlayableGame() {
           { word: 'は', reading: 'は', meaning: 'topic marker' },
           { word: '天気', reading: 'てんき', meaning: 'weather' },
           { word: 'が', reading: 'が', meaning: 'subject marker' },
-          { word: 'いい', reading: 'いい', meaning: 'good' }
+          { word: 'いい', reading: 'いい', meaning: 'good' },
         ],
-        grammarBreakdown: 'Uses が to mark 天気 as the subject of いい (good).'
-      }
-    ]
+        grammarBreakdown: 'Uses が to mark 天気 as the subject of いい (good).',
+      },
+    ],
   };
   const filename = 'test-playable-game.json';
   await fs.writeFile(path.join(DATA_DIR, filename), JSON.stringify(game));
@@ -150,7 +151,9 @@ test.describe('Game Playing', () => {
     await page.locator('.grammar-btn').click();
 
     await expect(page.locator('.grammar-breakdown')).toBeVisible();
-    await expect(page.locator('.grammar-breakdown')).toContainText('This is a basic self-introduction');
+    await expect(page.locator('.grammar-breakdown')).toContainText(
+      'This is a basic self-introduction',
+    );
   });
 
   test('next sentence advances to next sentence', async ({ page }) => {
@@ -221,7 +224,9 @@ test.describe('Game Playing', () => {
 
     // Should show game complete screen
     await expect(page.locator('.game-complete')).toBeVisible();
-    await expect(page.locator('.game-complete h3')).toContainText('Game Complete');
+    await expect(page.locator('.game-complete h3')).toContainText(
+      'Game Complete',
+    );
 
     // Check final score
     await expect(page.locator('.score-item.correct .value')).toContainText('0');

@@ -34,13 +34,17 @@ async function createTestGame(name, sentences) {
   const game = {
     name,
     createdAt: new Date().toISOString(),
-    sentences: sentences.map(s => ({
+    sentences: sentences.map((s) => ({
       original: s,
       words: [{ word: s, reading: s, meaning: 'test' }],
-      grammarBreakdown: 'Test grammar'
-    }))
+      grammarBreakdown: 'Test grammar',
+    })),
   };
-  const dateStr = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '');
+  const dateStr = new Date()
+    .toISOString()
+    .slice(0, 16)
+    .replace('T', '_')
+    .replace(':', '');
   const safeName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const filename = `${dateStr}_${safeName}.json`;
   await fs.writeFile(path.join(DATA_DIR, filename), JSON.stringify(game));
@@ -59,7 +63,9 @@ test.describe('Game List', () => {
   test('shows welcome message when no games exist', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('.welcome h2')).toContainText('Welcome to Narabe!');
+    await expect(page.locator('.welcome h2')).toContainText(
+      'Welcome to Narabe!',
+    );
     await expect(page.locator('.create-btn')).toBeVisible();
     await expect(page.locator('.create-btn')).toContainText('Create New Game');
   });
@@ -71,7 +77,9 @@ test.describe('Game List', () => {
     await page.goto('/');
 
     await expect(page.locator('.game-card')).toHaveCount(2);
-    await expect(page.locator('.game-card h3').first()).toContainText('Test Game');
+    await expect(page.locator('.game-card h3').first()).toContainText(
+      'Test Game',
+    );
   });
 
   test('shows sentence count for each game', async ({ page }) => {
@@ -104,7 +112,9 @@ test.describe('Game List', () => {
 
     await page.locator('.create-btn').click();
 
-    await expect(page.locator('.game-creator h2')).toContainText('Create New Game');
+    await expect(page.locator('.game-creator h2')).toContainText(
+      'Create New Game',
+    );
     await expect(page.locator('#game-name')).toBeVisible();
     await expect(page.locator('#sentences')).toBeVisible();
   });

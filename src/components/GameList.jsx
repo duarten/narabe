@@ -33,7 +33,7 @@ function GameList(props) {
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -42,7 +42,9 @@ function GameList(props) {
       <Show when={!games.loading && (!games() || games().length === 0)}>
         <div class="welcome">
           <h2>Welcome to Narabe!</h2>
-          <p>Learn Japanese by arranging shuffled words into correct sentences.</p>
+          <p>
+            Learn Japanese by arranging shuffled words into correct sentences.
+          </p>
           <p>Create your first game to get started.</p>
         </div>
       </Show>

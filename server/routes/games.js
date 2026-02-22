@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, '..', process.env.DATA_DIR || 'data');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
 
 // Ensure data directory exists
 async function ensureDataDir() {
@@ -33,7 +33,7 @@ gamesRouter.get('/', async (req, res) => {
           filename: file,
           name: game.name,
           createdAt: game.createdAt,
-          sentenceCount: game.sentences?.length || 0
+          sentenceCount: game.sentences?.length || 0,
         });
       } catch (err) {
         console.error(`Error reading game file ${file}:`, err);
@@ -72,13 +72,22 @@ gamesRouter.post('/', async (req, res) => {
     const game = req.body;
 
     if (!game.name || !game.sentences) {
-      return res.status(400).json({ error: 'Game must have name and sentences' });
+      return res
+        .status(400)
+        .json({ error: 'Game must have name and sentences' });
     }
 
     // Generate filename: datetime_game-name.json
     const now = new Date();
-    const dateStr = now.toISOString().slice(0, 16).replace('T', '_').replace(':', '');
-    const safeName = game.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50);
+    const dateStr = now
+      .toISOString()
+      .slice(0, 16)
+      .replace('T', '_')
+      .replace(':', '');
+    const safeName = game.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .slice(0, 50);
     const filename = `${dateStr}_${safeName}.json`;
 
     // Add createdAt if not present
@@ -86,7 +95,10 @@ gamesRouter.post('/', async (req, res) => {
       game.createdAt = now.toISOString();
     }
 
-    await fs.writeFile(path.join(DATA_DIR, filename), JSON.stringify(game, null, 2));
+    await fs.writeFile(
+      path.join(DATA_DIR, filename),
+      JSON.stringify(game, null, 2),
+    );
     res.json({ filename, success: true });
   } catch (err) {
     console.error('Error saving game:', err);

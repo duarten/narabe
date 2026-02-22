@@ -35,9 +35,9 @@ claudeRouter.post('/process-sentence', async (req, res) => {
       messages: [
         {
           role: 'user',
-          content: `Sentence: ${sentence}`
-        }
-      ]
+          content: `Sentence: ${sentence}`,
+        },
+      ],
     });
 
     const responseText = message.content[0].text;
@@ -59,10 +59,12 @@ claudeRouter.post('/process-sentence', async (req, res) => {
     res.json({
       original: sentence,
       words: parsed.words,
-      grammarBreakdown: parsed.grammarBreakdown
+      grammarBreakdown: parsed.grammarBreakdown,
     });
   } catch (err) {
     console.error('Error processing sentence:', err);
-    res.status(500).json({ error: 'Failed to process sentence', details: err.message });
+    res
+      .status(500)
+      .json({ error: 'Failed to process sentence', details: err.message });
   }
 });
