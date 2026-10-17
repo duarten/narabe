@@ -15,10 +15,19 @@ async function ensureDataDir() {
   }
 }
 
+// Resolve a game filename inside DATA_DIR, rejecting anything that could
+// escape it (e.g. "..%2F.env" decodes to "../.env")
+function gamePath(filename) {
+  if (path.basename(filename) !== filename || !filename.endsWith('.json')) {
+    return null;
+  }
+  return path.join(DATA_DIR, filename);
+}
+
 export const gamesRouter = express.Router();
 
 // List all games
-gamesRouter.get('/', async (req, res) => {
+gamesRouter.get('/', async (_req, res) => {
   try {
     await ensureDataDir();
     const files = await fs.readdir(DATA_DIR);
@@ -52,7 +61,10 @@ gamesRouter.get('/', async (req, res) => {
 // Get a specific game
 gamesRouter.get('/:filename', async (req, res) => {
   try {
-    const filePath = path.join(DATA_DIR, req.params.filename);
+    const filePath = gamePath(req.params.filename);
+    if (!filePath) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
     const content = await fs.readFile(filePath, 'utf-8');
     res.json(JSON.parse(content));
   } catch (err) {
@@ -71,7 +83,11 @@ gamesRouter.post('/', async (req, res) => {
     await ensureDataDir();
     const game = req.body;
 
-    if (!game.name || !game.sentences) {
+    if (
+      typeof game?.name !== 'string' ||
+      !game.name ||
+      !Array.isArray(game.sentences)
+    ) {
       return res
         .status(400)
         .json({ error: 'Game must have name and sentences' });
@@ -88,17 +104,27 @@ gamesRouter.post('/', async (req, res) => {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .slice(0, 50);
-    const filename = `${dateStr}_${safeName}.json`;
 
     // Add createdAt if not present
     if (!game.createdAt) {
       game.createdAt = now.toISOString();
     }
 
-    await fs.writeFile(
-      path.join(DATA_DIR, filename),
-      JSON.stringify(game, null, 2),
-    );
+    // Names without Latin letters (e.g. Japanese) all reduce to the same
+    // safeName, so never overwrite: add a counter until the name is free
+    const content = JSON.stringify(game, null, 2);
+    let filename = `${dateStr}_${safeName}.json`;
+    for (let n = 2; ; n++) {
+      try {
+        await fs.writeFile(path.join(DATA_DIR, filename), content, {
+          flag: 'wx',
+        });
+        break;
+      } catch (err) {
+        if (err.code !== 'EEXIST') throw err;
+        filename = `${dateStr}_${safeName}-${n}.json`;
+      }
+    }
     res.json({ filename, success: true });
   } catch (err) {
     console.error('Error saving game:', err);
@@ -109,7 +135,10 @@ gamesRouter.post('/', async (req, res) => {
 // Delete a game
 gamesRouter.delete('/:filename', async (req, res) => {
   try {
-    const filePath = path.join(DATA_DIR, req.params.filename);
+    const filePath = gamePath(req.params.filename);
+    if (!filePath) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
     await fs.unlink(filePath);
     res.json({ success: true });
   } catch (err) {

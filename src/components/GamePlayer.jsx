@@ -1,4 +1,4 @@
-import { createSignal, createMemo, Show } from 'solid-js';
+import { createSignal, createMemo, Show, batch } from 'solid-js';
 import SentenceBoard from './SentenceBoard';
 
 function GamePlayer(props) {
@@ -30,23 +30,27 @@ function GamePlayer(props) {
     setSkippedCount((c) => c + 1);
   };
 
-  const handleNext = () => {
-    setCurrentIndex((i) => i + 1);
-    setSentenceState('playing');
-    setShowReadings(false);
-    setShowMeanings(false);
-    setShowGrammar(false);
-  };
+  // Batched so the board never sees the next sentence while the state is
+  // still 'skipped', which would reveal its correct order
+  const handleNext = () =>
+    batch(() => {
+      setCurrentIndex((i) => i + 1);
+      setSentenceState('playing');
+      setShowReadings(false);
+      setShowMeanings(false);
+      setShowGrammar(false);
+    });
 
-  const handleRestart = () => {
-    setCurrentIndex(0);
-    setCorrectCount(0);
-    setSkippedCount(0);
-    setSentenceState('playing');
-    setShowReadings(false);
-    setShowMeanings(false);
-    setShowGrammar(false);
-  };
+  const handleRestart = () =>
+    batch(() => {
+      setCurrentIndex(0);
+      setCorrectCount(0);
+      setSkippedCount(0);
+      setSentenceState('playing');
+      setShowReadings(false);
+      setShowMeanings(false);
+      setShowGrammar(false);
+    });
 
   return (
     <div class="game-player">

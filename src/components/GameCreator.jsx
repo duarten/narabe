@@ -48,10 +48,10 @@ function GameCreator(props) {
       );
 
       // Check if any sentences had errors
-      const failedCount = results.filter((r) => r.error).length;
-      if (failedCount > 0) {
+      const failed = results.filter((r) => r.error);
+      if (failed.length > 0) {
         setError(
-          `${failedCount} sentence(s) failed to process. Please check your API key and try again.`,
+          `${failed.length} sentence(s) failed to process: ${failed[0].error}`,
         );
         setProcessing(false);
         return;

@@ -38,7 +38,10 @@ export async function processSentence(sentence) {
   });
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(error.error || 'Failed to process sentence');
+    // The details say what went wrong, e.g. Claude Code not being logged in
+    throw new Error(
+      error.details || error.error || 'Failed to process sentence',
+    );
   }
   return res.json();
 }

@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import path from 'path';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -18,8 +19,28 @@ export default defineConfig({
       reuseExistingServer: false,
       env: {
         ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || 'test-key',
-        DATA_DIR: 'data-test',
+        CLAUDE_BACKEND: 'api',
+        // Absolute, so the server uses the same directory the tests seed
+        DATA_DIR: path.join(import.meta.dirname, 'server', 'data-test'),
         PORT: '3002',
+      },
+    },
+    {
+      // The claude-code backend, with a stand-in for the Claude Code CLI
+      command: 'node server/index.js',
+      port: 3006,
+      reuseExistingServer: false,
+      env: {
+        ANTHROPIC_API_KEY: 'test-key',
+        CLAUDE_BACKEND: 'claude-code',
+        CLAUDE_CODE_PATH: path.join(
+          import.meta.dirname,
+          'tests',
+          'fixtures',
+          'fake-claude.js',
+        ),
+        DATA_DIR: path.join(import.meta.dirname, 'server', 'data-test'),
+        PORT: '3006',
       },
     },
     {
