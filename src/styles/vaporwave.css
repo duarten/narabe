@@ -440,9 +440,6 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  /* Not centered: when the dragged word moves, a centered row would shift
-     every tile in it, often from under the pointer, which then picks another
-     place for the word, and so on */
   justify-content: flex-start;
   min-height: 80px;
   padding: 20px;
@@ -476,7 +473,7 @@ button:disabled {
   -webkit-touch-callout: none;
 }
 
-.words-container.playable:not(.sorting) .word-tile:hover {
+.words-container.playable:not(.sorting, .hover-stale) .word-tile:hover {
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(185, 103, 255, 0.5);
 }
@@ -491,15 +488,23 @@ button:disabled {
   cursor: grabbing;
 }
 
-/* Where the dragged word would go */
-.word-tile.placeholder {
-  background: rgba(1, 205, 254, 0.1);
+/* The word being dragged, in its place until it's dropped */
+.word-tile.dragged {
   border: 1px dashed var(--cyan);
-  box-shadow: inset 0 0 12px rgba(1, 205, 254, 0.3);
+  opacity: 0.5;
 }
 
-.word-tile.placeholder > * {
-  visibility: hidden;
+/* Where the dragged word would go, in the gap beside a word, between the
+   tile and the letters of the dragged word's copy */
+.drop-bar {
+  position: absolute;
+  z-index: 1001;
+  width: 4px;
+  translate: -50%;
+  border-radius: 2px;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+  pointer-events: none;
 }
 
 .word-tile.drag-overlay {
@@ -513,6 +518,18 @@ button:disabled {
   scale: 1.1;
   box-shadow: 0 0 25px rgba(185, 103, 255, 0.7);
   animation: lift 0.15s ease-out;
+}
+
+.word-tile.drag-overlay:not(.letters) > * {
+  visibility: hidden;
+}
+
+/* The copy's letters, over the drop bar, laid out as on its tile */
+.word-tile.drag-overlay.letters {
+  z-index: 1002;
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 @keyframes lift {

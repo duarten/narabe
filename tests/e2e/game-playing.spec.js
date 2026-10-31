@@ -100,6 +100,30 @@ async function dragWord(page, from, to, side) {
   );
 }
 
+// Expects the drop bar in the gap on the left or right of the word tile at
+// `index`
+async function expectDropBar(page, index, side) {
+  const bar = await page.locator('.drop-bar').boundingBox();
+  const tile = await page
+    .locator('.words-container .word-tile')
+    .nth(index)
+    .boundingBox();
+  const edge = side === 'left' ? tile.x : tile.x + tile.width;
+  const offset = (bar.x + bar.width / 2 - edge) * (side === 'left' ? -1 : 1);
+  // Less than the 12px gap between tiles
+  expect(offset).toBeGreaterThan(0);
+  expect(offset).toBeLessThan(12);
+  expect(bar.y).toBeCloseTo(tile.y, 0);
+}
+
+// The tiles' places in the layout, which their transforms don't move
+const tileOffsets = (page) =>
+  page
+    .locator('.words-container .word-tile')
+    .evaluateAll((tiles) =>
+      tiles.map((tile) => ({ left: tile.offsetLeft, top: tile.offsetTop })),
+    );
+
 test.describe('Game Playing', () => {
   test.beforeEach(async () => {
     await clearGames();
@@ -370,17 +394,70 @@ test.describe('Game Playing', () => {
     const tiles = page.locator('.words-container .word-tile');
     // Two words are always shuffled into the wrong order
     await expect(tiles).toHaveText(['だ', '猫']);
+    const start = await tileOffsets(page);
 
     await dragWord(page, 0, 1, 'right');
-    await expect(tiles).toHaveText(['猫', 'だ']);
-    await expect(tiles.nth(1)).toHaveClass(/placeholder/);
-    await expect(page.locator('.drag-overlay')).toHaveText('だ');
+    await expect(page.locator('.drag-overlay.letters')).toHaveText('だ');
+    // The tiles stay where they were, with a bar where the word would go
+    await expect(tiles).toHaveText(['だ', '猫']);
+    expect(await tileOffsets(page)).toEqual(start);
+    await expect(tiles.nth(0)).toHaveClass(/dragged/);
+    await expectDropBar(page, 1, 'right');
     await expect(page.locator('.sentence-board')).not.toHaveClass(/correct/);
 
     await page.mouse.up();
+    await expect(tiles).toHaveText(['猫', 'だ']);
+    await expect(page.locator('.drop-bar')).toHaveCount(0);
     await expect(page.locator('.sentence-board')).toHaveClass(/correct/);
     await expect(page.locator('.game-status')).toContainText('Correct: 1');
     await expect(page.locator('.drag-overlay')).toHaveCount(0);
+  });
+
+  test('a word dragged back over itself stays where it was', async ({
+    page,
+  }) => {
+    await createCustomGame([TWO_WORDS]);
+    await page.goto('/');
+    await page.locator('.game-card').click();
+    const tiles = page.locator('.words-container .word-tile');
+    await expect(tiles).toHaveText(['だ', '猫']);
+
+    await dragWord(page, 0, 1, 'right');
+    await expect(page.locator('.drop-bar')).toHaveCount(1);
+    const own = await tiles.nth(0).boundingBox();
+    await page.mouse.move(own.x + own.width / 2, own.y + own.height / 2, {
+      steps: 5,
+    });
+    await expect(page.locator('.drop-bar')).toHaveCount(0);
+
+    await page.mouse.up();
+    await expect(page.locator('.drag-overlay')).toHaveCount(0);
+    await expect(tiles).toHaveText(['だ', '猫']);
+  });
+
+  test('the bar shows a word dragged before the first in a row at its start', async ({
+    page,
+  }) => {
+    // Narrow enough for the words to wrap onto two rows
+    await page.setViewportSize({ width: 390, height: 844 });
+    await createPlayableGame();
+    await page.goto('/');
+    await page.locator('.game-card').click();
+    const tiles = page.locator('.words-container .word-tile');
+    await expect(tiles).toHaveCount(4);
+    const before = await tiles.allTextContents();
+    const start = await tileOffsets(page);
+    const last = start.findIndex((tile, i) => start[i + 1]?.top > tile.top);
+    expect(last).toBeGreaterThanOrEqual(0);
+
+    // The last word in a row, over the left half of the next row's first
+    await dragWord(page, last, last + 1, 'left');
+    await expectDropBar(page, last + 1, 'left');
+
+    // The same place in the order as where it was
+    await page.mouse.up();
+    await expect(page.locator('.drag-overlay')).toHaveCount(0);
+    await expect(tiles).toHaveText(before);
   });
 
   test('words cannot be dragged once the sentence is over', async ({

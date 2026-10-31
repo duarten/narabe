@@ -69,18 +69,27 @@ function SentenceBoard(props) {
   const [wordOrder, setWordOrder] = createSignal([]);
   const [shuffledSentence, setShuffledSentence] = createSignal(null);
   const [readingLists] = createResource(loadReadingLists);
-  // While a word is dragged, the tiles show the order it would make, which
-  // only becomes the word order when it's dropped
+  // While a word is dragged, the tiles stay in place and a bar shows where
+  // it would go: before or after the target word. The word order only
+  // changes when it's dropped.
   const [dragId, setDragId] = createSignal(null);
-  const [dragOrder, setDragOrder] = createSignal(null);
+  const [target, setTarget] = createSignal(null);
   const [pointer, setPointer] = createSignal({ x: 0, y: 0 });
+  // After a drop moves the tiles, the browser takes the pointer to be over
+  // the word that was there before until it moves
+  const [hoverStale, setHoverStale] = createSignal(false);
 
   let container;
-  let overlay;
+  // The dragged word's copy, in two layers so the drop bar can go between
+  // them: its tile, and its letters over it
+  let copyTile;
+  let copyLetters;
   const tiles = new Map();
   // The pointer pressing a tile, and where on the tile it pressed
   let press = null;
   let grab = { x: 0, y: 0 };
+  // The dropped word's copy settling into its place, one animation a layer
+  let settling = [];
 
   // The sentence the word order was made for, which props.sentence can run
   // ahead of until the effect below catches up
@@ -182,33 +191,49 @@ function SentenceBoard(props) {
     }
   };
 
+  // Where a tile is in the viewport, by its offsets rather than its rect, so
+  // a tile still sliding from the last drop counts as already in its place
+  const placeOf = (tile) => {
+    const origin = container.getBoundingClientRect();
+    const left = origin.left + container.clientLeft + tile.offsetLeft;
+    const top = origin.top + container.clientTop + tile.offsetTop;
+    return {
+      left,
+      top,
+      right: left + tile.offsetWidth,
+      bottom: top + tile.offsetHeight,
+    };
+  };
+
   // Where the dragged word goes for a pointer at (x, y): before or after the
   // word nearest the pointer in its row, by which half of that word it's
-  // over. Uses offsets rather than the tiles' rects so a sliding tile counts
-  // as already in its place, and moving one doesn't move the targets around.
-  const dropIndex = (order, x, y) => {
-    const from = order.indexOf(dragId());
-    const origin = container.getBoundingClientRect();
-    const left = origin.left + container.clientLeft;
-    const top = origin.top + container.clientTop;
+  // over, or null over no row
+  const dropTarget = (x, y) => {
     let nearest = null;
-    order.forEach((id, index) => {
-      const tile = tiles.get(id);
-      const tileTop = top + tile.offsetTop;
-      if (y < tileTop || y > tileTop + tile.offsetHeight) return;
-      const tileLeft = left + tile.offsetLeft;
-      const distance = Math.max(
-        tileLeft - x,
-        x - (tileLeft + tile.offsetWidth),
-        0,
-      );
+    for (const [id, tile] of tiles) {
+      const place = placeOf(tile);
+      if (y < place.top || y > place.bottom) continue;
+      const distance = Math.max(place.left - x, x - place.right, 0);
       if (!nearest || distance < nearest.distance) {
-        nearest = { index, distance, center: tileLeft + tile.offsetWidth / 2 };
+        nearest = { id, distance, after: x >= (place.left + place.right) / 2 };
       }
-    });
-    if (!nearest || nearest.index === from) return from;
-    const to = x < nearest.center ? nearest.index : nearest.index + 1;
-    return from < to ? to - 1 : to;
+    }
+    return nearest && { id: nearest.id, after: nearest.after };
+  };
+
+  // The bar showing where the dragged word goes, in the gap on that side of
+  // the target word. It's placed on the page, since in the board the app's
+  // stacking context would keep it under the dragged word's copy, which is
+  // usually over it, rather than between the copy's tile and letters.
+  const dropBarStyle = ({ id, after }) => {
+    const place = placeOf(tiles.get(id));
+    const gap = parseFloat(getComputedStyle(container).columnGap);
+    const x = after ? place.right + gap / 2 : place.left - gap / 2;
+    return {
+      left: `${window.scrollX + x}px`,
+      top: `${window.scrollY + place.top}px`,
+      height: `${place.bottom - place.top}px`,
+    };
   };
 
   const onPointerDown = (event, id) => {
@@ -234,18 +259,14 @@ function SentenceBoard(props) {
     const starting = dragId() === null;
     const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y);
     if (starting && moved < DRAG_THRESHOLD) return;
+    const to = dropTarget(event.clientX, event.clientY);
     batch(() => {
       setPointer({ x: event.clientX, y: event.clientY });
-      if (starting) {
-        setDragOrder(wordOrder());
-        setDragId(press.id);
-      }
+      if (starting) setDragId(press.id);
+      // Over no row, as between two rows, the bar stays where it was; over
+      // the word's own tile it goes, as the word would stay put
+      if (to) setTarget(to.id === press.id ? null : to);
     });
-
-    const order = dragOrder();
-    const from = order.indexOf(press.id);
-    const to = dropIndex(order, event.clientX, event.clientY);
-    if (to !== from) slideTiles(() => setDragOrder(moveItem(order, from, to)));
   };
 
   const stopListening = () => {
@@ -256,32 +277,53 @@ function SentenceBoard(props) {
   };
   onCleanup(stopListening);
 
-  // Drops the dragged word where the tiles show it, settling it into its
-  // place before the tile there shows it
+  // Drops the dragged word where the bar shows, sliding the tiles to their
+  // new places, and settles it into its own before the tile there shows it
   const onPointerUp = (event) => {
     if (event.pointerId !== press.pointerId) return;
     stopListening();
     const id = dragId();
     if (id === null) return;
 
-    batch(() => {
-      setWordOrder(dragOrder());
-      setDragOrder(null);
-    });
+    const to = target();
+    setTarget(null);
+    if (to) {
+      setHoverStale(true);
+      slideTiles(() => {
+        const order = wordOrder();
+        const from = order.indexOf(id);
+        const index = order.indexOf(to.id) + (to.after ? 1 : 0);
+        setWordOrder(moveItem(order, from, from < index ? index - 1 : index));
+      });
+    }
     const tile = tiles.get(id);
     if (reducedMotion() || !tile) {
-      setDragId(null);
+      endDrag();
       return;
     }
     slideOf(tile)?.cancel();
-    const to = tile.getBoundingClientRect();
-    overlay.animate([{ translate: `${to.left}px ${to.top}px`, scale: 1 }], {
-      duration: 150,
-      easing: 'ease-out',
-    }).onfinish = () => {
-      // Unless the next sentence came up meanwhile and a drag began on it
-      if (dragOrder() === null) setDragId(null);
+    const rect = tile.getBoundingClientRect();
+    // Landing as the tile looks, when the other tiles land, before which
+    // hovering one would cut its slide short. Held at the end until it's
+    // gone, so it can't show at the pointer again for a frame.
+    const landing = {
+      translate: `${rect.left}px ${rect.top}px`,
+      scale: 1,
+      boxShadow: 'none',
     };
+    settling = [copyTile, copyLetters].map((layer) =>
+      layer.animate([landing], { ...SLIDE, fill: 'forwards' }),
+    );
+    settling[0].onfinish = endDrag;
+  };
+
+  // Once the tiles are in place, the first move of the pointer puts it over
+  // the right word again
+  const endDrag = () => {
+    setDragId(null);
+    window.addEventListener('pointermove', () => setHoverStale(false), {
+      once: true,
+    });
   };
 
   // The browser took the pointer over, e.g. for a gesture: put the word back
@@ -289,13 +331,38 @@ function SentenceBoard(props) {
     if (event.pointerId === press.pointerId) cancelDrag();
   };
 
+  // Also stops a dropped word settling, so that it can't end a drag begun
+  // on the next sentence meanwhile
   function cancelDrag() {
     stopListening();
+    for (const animation of settling) animation.cancel();
     batch(() => {
-      setDragOrder(null);
+      setTarget(null);
       setDragId(null);
     });
   }
+
+  // A layer of the dragged word's copy: its tile, with the letters hidden to
+  // size it, or its letters
+  const CopyLayer = (layer) => (
+    <div
+      ref={layer.ref}
+      class="word-tile drag-overlay"
+      classList={{ letters: layer.letters }}
+      style={{
+        // The translate property, unlike transform, isn't scaled by the
+        // copy's scale
+        translate: `${pointer().x - grab.x}px ${pointer().y - grab.y}px`,
+      }}
+    >
+      <WordContent
+        word={words()[dragId()]}
+        showReadings={props.showReadings}
+        showMeanings={props.showMeanings}
+        readingLists={readingLists()}
+      />
+    </div>
+  );
 
   return (
     <div
@@ -310,10 +377,11 @@ function SentenceBoard(props) {
         class="words-container"
         classList={{
           playable: props.state === 'playing',
-          sorting: dragOrder() !== null,
+          sorting: dragId() !== null,
+          'hover-stale': hoverStale(),
         }}
       >
-        <For each={dragOrder() ?? wordOrder()}>
+        <For each={wordOrder()}>
           {(id) => {
             onCleanup(() => tiles.delete(id));
             return (
@@ -321,7 +389,7 @@ function SentenceBoard(props) {
                 ref={(tile) => tiles.set(id, tile)}
                 class="word-tile"
                 classList={{
-                  placeholder: dragId() === id,
+                  dragged: dragId() === id,
                   'with-hints': props.showReadings || props.showMeanings,
                 }}
                 onPointerDown={(event) => onPointerDown(event, id)}
@@ -338,24 +406,18 @@ function SentenceBoard(props) {
         </For>
       </div>
 
+      <Show when={target()}>
+        {(to) => (
+          <Portal>
+            <div class="drop-bar" style={dropBarStyle(to())} />
+          </Portal>
+        )}
+      </Show>
+
       <Show when={dragId() !== null && words()[dragId()]}>
         <Portal>
-          <div
-            ref={overlay}
-            class="word-tile drag-overlay"
-            style={{
-              // The translate property, unlike transform, isn't scaled by
-              // the overlay's scale
-              translate: `${pointer().x - grab.x}px ${pointer().y - grab.y}px`,
-            }}
-          >
-            <WordContent
-              word={words()[dragId()]}
-              showReadings={props.showReadings}
-              showMeanings={props.showMeanings}
-              readingLists={readingLists()}
-            />
-          </div>
+          <CopyLayer ref={copyTile} />
+          <CopyLayer ref={copyLetters} letters />
         </Portal>
       </Show>
 
