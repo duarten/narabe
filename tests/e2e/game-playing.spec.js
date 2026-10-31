@@ -186,6 +186,51 @@ test.describe('Game Playing', () => {
     await expect(page.locator('.word-text span')).toHaveCount(0);
   });
 
+  test('readings the font can’t draw go in a ruby', async ({ page }) => {
+    await createCustomGame([
+      {
+        original: '2人が軋む忠と区',
+        words: [
+          { word: '2人', reading: 'ふたり', meaning: 'two people' },
+          { word: '軋む', reading: 'きしむ', meaning: 'to creak' },
+          { word: '忠', reading: 'ちゅう', meaning: 'loyalty' },
+          { word: '区', reading: 'く', meaning: 'ward' },
+          { word: '学生', reading: 'がくせい', meaning: 'student' },
+        ],
+        grammarBreakdown: 'Test grammar',
+      },
+    ]);
+    await page.goto('/');
+    await page.locator('.game-card').click();
+    const tile = (text) =>
+      page.locator('.words-container .word-tile', { hasText: text });
+    const before = await tile('忠').boundingBox();
+    await page.locator('.reading-btn').click();
+
+    // The font has no glyph for the only reading of 軋 or 忠, and the digit in
+    // 2人 can't be lined up with its reading. Only the kanji's part goes over 軋.
+    const rubies = page.locator('.word-text ruby');
+    await expect(rubies).toHaveCount(3);
+    await expect(tile('軋').locator('rt')).toHaveText('きし');
+    await expect(tile('軋').locator('.word-text')).toContainText('む');
+    await expect(tile('忠').locator('rt')).toHaveText('ちゅう');
+    await expect(tile('2人').locator('rt')).toHaveText('ふたり');
+    await expect(rubies.first()).toHaveCSS('font-feature-settings', '"ss01"');
+    // The font shows 区 and 学生 itself
+    await expect(tile('区').locator('ruby')).toHaveCount(0);
+    await expect(tile('学生').locator('ruby')).toHaveCount(0);
+
+    // Like the font's furigana, a ruby doesn't move or resize anything, even
+    // when it's wider than its kanji
+    const text = async (word) =>
+      (await tile(word).locator('.word-text').boundingBox()).height;
+    expect(await text('軋')).toBe(await text('学生'));
+    expect((await tile('忠').boundingBox()).width).toBe(before.width);
+
+    await page.locator('.reading-btn').click();
+    await expect(rubies).toHaveCount(0);
+  });
+
   test('show meanings reveals word meanings', async ({ page }) => {
     await createPlayableGame();
     await page.goto('/');

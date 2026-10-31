@@ -536,6 +536,24 @@ button:disabled {
   font-feature-settings: normal;
 }
 
+/* A reading the font can't draw, over its kanji with the font's own off. Out
+   of flow and placed like the font's furigana, which don't change the size of
+   a tile, where a ruby's own layout would push the kanji down and out. */
+.word-text ruby {
+  position: relative;
+  font-feature-settings: 'ss01';
+}
+
+.word-text rt {
+  position: absolute;
+  bottom: 2.5em;
+  left: 50%;
+  translate: -50%;
+  font-size: 0.5em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .word-meaning {
   font-size: 0.9rem;
   color: var(--cyan);

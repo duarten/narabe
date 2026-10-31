@@ -2,7 +2,8 @@
 // reading from a dictionary. We know the actual reading of every word, so
 // when the font's default differs, `font-feature-settings: "salt" n` on the
 // run picks the reading it should show, from the lists in the font's
-// .ivs.json. See https://github.com/antfu/furifont/blob/main/docs/design.md
+// .ivs.json, and a <ruby> shows those it has no glyph for.
+// See https://github.com/antfu/furifont/blob/main/docs/design.md
 
 const HAN_RUN = /(\p{sc=Han}+)/u;
 
@@ -23,25 +24,29 @@ export const loadReadingLists = () =>
       return null;
     });
 
-// Same rule as @furifont/helper-web's saltOf: a run of several kanji picks
-// among the word's readings, the first being the default; a lone kanji picks
-// among its own, unless the font shows that reading anyway. 0 means no salt.
-function saltOf(run, reading, { kanji, words, lone }) {
-  const isWord = [...run].length > 1;
+// How a run of kanji shows its reading. A run of several kanji picks among the
+// word's readings, the first being the default, and one the lists don't have
+// is left to the font's guess. A lone kanji shows its default reading or picks
+// among its own, though the font only draws those for a kanji with several:
+// 軋 lists きし, but no salt draws it. What the font can't draw gets a <ruby>.
+function readingRun(text, reading, { kanji, words, lone }) {
+  const isWord = [...text].length > 1;
+  if (isWord && !words[text]) return { text };
   const readings = isWord
-    ? words[run]?.map((notation) =>
+    ? words[text].map((notation) =>
         [...notation.matchAll(/\[([^\]]*)\]/g)].map((m) => m[1]).join(''),
       )
-    : kanji[run];
-  const index = readings?.indexOf(reading) ?? -1;
-  return index >= (isWord ? 1 : 0) && index < 15 && lone[run] !== reading
-    ? index + 1
-    : 0;
+    : (kanji[text] ?? []);
+  const index = readings.indexOf(reading);
+  if (isWord ? index === 0 : lone[text] === reading) return { text };
+  return index >= 0 && index < 15 && readings.length > 1
+    ? { text, salt: index + 1 }
+    : { text, ruby: reading };
 }
 
-// Splits a word into runs of text, giving each run of kanji the salt that
-// makes Furifont show its part of the reading. When the reading can't be
-// lined up with the word, the font's own guesses are left in place.
+// Splits a word into runs of text, saying how each run of kanji shows its part
+// of the reading. A reading that can't be lined up with the word (2人 → ふたり)
+// goes over the whole word.
 export function rubyRuns(word, reading, lists) {
   const parts = word.split(HAN_RUN).filter(Boolean);
   if (!lists || !reading || !parts.some(isHan)) return [{ text: word }];
@@ -52,12 +57,10 @@ export function rubyRuns(word, reading, lists) {
     .map((part) => (isHan(part) ? '(.+?)' : escapeRegExp(toHiragana(part))))
     .join('');
   const match = toHiragana(reading).match(new RegExp(`^${pattern}$`, 'u'));
-  if (!match) return [{ text: word }];
+  if (!match) return [{ text: word, ruby: reading }];
 
   let group = 1;
   return parts.map((part) =>
-    isHan(part)
-      ? { text: part, salt: saltOf(part, match[group++], lists) }
-      : { text: part },
+    isHan(part) ? readingRun(part, match[group++], lists) : { text: part },
   );
 }

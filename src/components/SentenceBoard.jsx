@@ -43,7 +43,12 @@ function WordContent(props) {
       >
         <For each={runs()}>
           {(run) =>
-            run.salt ? (
+            run.ruby ? (
+              <ruby>
+                {run.text}
+                <rt>{run.ruby}</rt>
+              </ruby>
+            ) : run.salt ? (
               <span style={{ 'font-feature-settings': `"salt" ${run.salt}` }}>
                 {run.text}
               </span>
