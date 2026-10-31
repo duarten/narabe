@@ -7,6 +7,7 @@ import {
   onCleanup,
 } from 'solid-js';
 import SentenceBoard from './SentenceBoard';
+import GrammarText from './GrammarText';
 import { fetchVoice } from '../lib/api';
 import { speak, stopSpeaking } from '../lib/speech';
 
@@ -164,7 +165,7 @@ function GamePlayer(props) {
           <Show when={showGrammar() && currentSentence()?.grammarBreakdown}>
             <div class="grammar-breakdown">
               <h4>Grammar Breakdown</h4>
-              <p>{currentSentence().grammarBreakdown}</p>
+              <GrammarText text={currentSentence().grammarBreakdown} />
             </div>
           </Show>
         </Show>

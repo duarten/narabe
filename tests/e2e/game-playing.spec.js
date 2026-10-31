@@ -305,6 +305,33 @@ test.describe('Game Playing', () => {
     );
   });
 
+  test('grammar breakdown renders its Markdown', async ({ page }) => {
+    await createCustomGame([
+      {
+        ...TWO_WORDS,
+        grammarBreakdown:
+          '**だ** is the copula.\n\nIt is <b>plain</b>, and 2 ** 3 stays.\n\n- Noun + **だ**\n- Not after adjectives',
+      },
+    ]);
+    await page.goto('/');
+    await page.locator('.game-card').click();
+
+    await page.locator('.giveup-btn').click();
+    await page.locator('.grammar-btn').click();
+
+    const breakdown = page.locator('.grammar-breakdown');
+    await expect(breakdown.locator('p')).toHaveText([
+      'だ is the copula.',
+      'It is <b>plain</b>, and 2 ** 3 stays.',
+    ]);
+    await expect(breakdown.locator('li')).toHaveText([
+      'Noun + だ',
+      'Not after adjectives',
+    ]);
+    await expect(breakdown.locator('strong')).toHaveText(['だ', 'だ']);
+    await expect(breakdown.locator('b')).toHaveCount(0);
+  });
+
   test('next sentence advances to next sentence', async ({ page }) => {
     await createPlayableGame();
     await page.goto('/');

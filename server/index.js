@@ -30,7 +30,9 @@ if (process.env.NODE_ENV === 'production') {
 // only serve this machine rather than anyone who can reach it
 const HOST = BACKEND === 'claude-code' ? '127.0.0.1' : undefined;
 
-app.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, (err) => {
+  // Express calls back with errors too, such as the port being taken
+  if (err) throw err;
   console.log(
     `Server running on http://localhost:${PORT}, processing sentences with ${BACKEND === 'claude-code' ? 'Claude Code' : 'the Claude API'}`,
   );

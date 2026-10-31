@@ -118,4 +118,21 @@ test.describe('npm run voice', () => {
     expect(alongside.output).toContain('trouble');
   });
 
+  // Or `npm run local` would keep the engine running with no game to use it
+  test('a server that can’t take its port fails', async () => {
+    // The test server on the same address, as one on all addresses wouldn't
+    // conflict on macOS. If it starts after all, the timeout stops it.
+    const server = spawn('node', ['server/index.js'], {
+      env: { ...process.env, CLAUDE_BACKEND: 'claude-code', PORT: '3006' },
+      timeout: 10 * 1000,
+    });
+    const output = [];
+    server.stdout.on('data', (data) => output.push(data));
+    server.stderr.on('data', (data) => output.push(data));
+    const code = await new Promise((resolve) => server.on('close', resolve));
+
+    expect(code).not.toBe(0);
+    expect(Buffer.concat(output).toString()).toContain('EADDRINUSE');
+    expect(Buffer.concat(output).toString()).not.toContain('Server running');
+  });
 });

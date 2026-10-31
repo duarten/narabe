@@ -712,11 +712,22 @@ button:disabled {
   font-size: 1.3rem;
 }
 
-.grammar-breakdown p {
+.grammar-breakdown p,
+.grammar-breakdown li {
   font-family: 'Furifont Sans', 'Noto Sans JP', 'VT323', sans-serif;
   font-size: 1.1rem;
   line-height: 1.8;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.grammar-breakdown p + p,
+.grammar-breakdown p + ul,
+.grammar-breakdown ul + p {
+  margin-top: 12px;
+}
+
+.grammar-breakdown ul {
+  padding-left: 1.5em;
 }
 
 /* Game Complete */
