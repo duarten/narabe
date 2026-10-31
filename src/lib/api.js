@@ -46,6 +46,12 @@ export async function processSentence(sentence) {
   return res.json();
 }
 
+// The voice to credit, or null when there's no speech engine to play it
+export const fetchVoice = () =>
+  fetch(`${API_BASE}/tts/voice`)
+    .then((res) => (res.ok ? res.json() : null))
+    .catch(() => null);
+
 // Process multiple sentences with concurrency limit
 export async function processSentences(sentences, concurrency = 4, onProgress) {
   const results = new Array(sentences.length);

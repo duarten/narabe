@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { gamesRouter } from './routes/games.js';
 import { claudeRouter, BACKEND } from './routes/claude.js';
+import { ttsRouter } from './routes/tts.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.json({ limit: '5mb' }));
 // API routes
 app.use('/api/games', gamesRouter);
 app.use('/api', claudeRouter);
+app.use('/api/tts', ttsRouter);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

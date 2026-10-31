@@ -12,6 +12,7 @@ Narabe is a Japanese sentence ordering game built with:
 - **Testing**: Playwright E2E tests
 - **Styling**: Vaporwave aesthetic (CSS)
 - **Furigana**: [Furifont](https://furifont.antfu.me), a font that draws readings into its glyphs
+- **Speech**: [VOICEVOX](https://github.com/VOICEVOX/voicevox_engine), a local speech engine (optional)
 
 ## Architecture
 
@@ -21,7 +22,8 @@ narabe/
 │   ├── index.js              # Express server, serves static files in production
 │   ├── routes/
 │   │   ├── games.js          # Game CRUD (list, get, save, delete)
-│   │   └── claude.js         # Sentence processing via the Claude API or Claude Code
+│   │   ├── claude.js         # Sentence processing via the Claude API or Claude Code
+│   │   └── tts.js            # Speech via the VOICEVOX engine, cached on disk
 │   └── data/                 # Game JSON files stored here
 ├── src/
 │   ├── index.jsx             # Solid.js entry point
@@ -36,10 +38,11 @@ narabe/
 │   ├── assets/furifont/      # Vendored Furifont font, reading lists, licenses
 │   └── lib/
 │       ├── api.js            # API client functions
-│       └── furigana.js       # Picks the font reading that matches each word
+│       ├── furigana.js       # Picks the font reading that matches each word
+│       └── speech.js         # Plays one clip at a time
 └── tests/
     ├── e2e/                  # Playwright tests
-    └── fixtures/             # Stand-in for the Claude Code CLI
+    └── fixtures/             # Stand-ins for the Claude Code CLI and VOICEVOX
 ```
 
 ## Game Data Schema
@@ -89,6 +92,16 @@ The response shape is enforced with structured outputs (a JSON schema in `output
 Furifont shows furigana with no markup: for each run of kanji the font holds a glyph with the reading drawn above it. Its readings are dictionary guesses, so when showing readings, `src/lib/furigana.js` lines each word's reading (from Claude) up with its runs of kanji and sets `font-feature-settings: "salt" n` on runs where the font would otherwise show another reading or none. `"ss01"` turns the furigana off while readings are hidden. The grammar breakdown also uses the font, with its default readings. The font needs a `line-height` of about 1.6 or more, or the furigana is clipped.
 
 A `<ruby>` shows what the font can't draw: a reading of a lone kanji or a word that its list doesn't have, a lone kanji's only reading unless it's the default (`lone`), and a reading that can't be lined up with its word (`2人` → ふたり, over the whole word). `.ivs.json` is enough to tell: Furifont's planner only makes salt glyphs for a kanji with two or more readings (`buildRules`), so the 910 kanji with one reading and no default, like 軋 → きし, stay bare whatever the salt, and `salt 1` turns a kanji with one reading and a default, like 区, bare. A word the lists don't have is left to the font's guess, as they don't say whether the font has it. The `<rt>` is out of flow and placed where the font draws its furigana, as a ruby's own layout pushes the kanji down 3px and widens it to fit the reading, unlike the font's furigana.
+
+### Speech
+
+`server/routes/tts.js` calls the VOICEVOX engine (`POST /audio_query`, then its result to `POST /synthesis`) and caches each clip in `TTS_CACHE_DIR`, by voice and text. Tested with engine 0.26.0: on an Apple Silicon Mac a short sentence takes ~0.4s the first time and ~2ms from the cache. `GET /api/tts/voice` says whether the engine is up and what credit to show; `GamePlayer` hides all speech if it isn't. The credit is required by the engine's terms and the voice's, so it's shown wherever speech is offered.
+
+- **Spoilers**: the sentence can only be played once it's over, as hearing it gives away the order. During play, a tap on a tile (a press that never reached `DRAG_THRESHOLD`) plays just that word.
+- **What's sent is the text as written**, not `reading`. The engine reads a lone particle correctly (は → ワ, へ → エ), and `reading` is worse: がくせい comes out ガクセイ where 学生 comes out ガクセエ, and kana can get the wrong pitch accent: 橋 is ハシ' and 箸 is ハ'シ, but はし is always ハ'シ.
+- **Known limitation**: the engine guesses each kanji's reading, so it can disagree with `reading`, mostly for a word on its own: 今日 is always キョオ, even with the reading こんにち, and 人 always ヒト. The fix would be to compare `kana` in the `/audio_query` result to the reading and adjust the query before synthesis.
+- **Playback**: `speech.js` gives an `Audio` the server's URL and plays it within the tap, rather than fetching first, since browsers can refuse to start audio once the gesture has expired. Interrupting a clip rejects `play()` with an `AbortError`, which isn't a failure. Moving on to the next sentence or leaving the game stops the audio.
+- **The cache has no eviction**. Clips are small (~48KB a second), but on a server open to others the 500-character limit is all that holds back what they can make it synthesize and store.
 
 ### Drag and Drop
 

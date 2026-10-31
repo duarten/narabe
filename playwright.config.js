@@ -14,6 +14,12 @@ export default defineConfig({
   },
   webServer: [
     {
+      // A stand-in for the VOICEVOX engine
+      command: 'node tests/fixtures/fake-voicevox.js 3008',
+      port: 3008,
+      reuseExistingServer: false,
+    },
+    {
       command: 'node server/index.js',
       port: 3002,
       reuseExistingServer: false,
@@ -23,6 +29,13 @@ export default defineConfig({
         // Absolute, so the server uses the same directory the tests seed
         DATA_DIR: path.join(import.meta.dirname, 'server', 'data-test'),
         PORT: '3002',
+        TTS_CACHE_DIR: path.join(
+          import.meta.dirname,
+          'server',
+          'tts-cache-test',
+        ),
+        VOICEVOX_SPEAKER: '8',
+        VOICEVOX_URL: 'http://127.0.0.1:3008',
       },
     },
     {
@@ -41,6 +54,9 @@ export default defineConfig({
         ),
         DATA_DIR: path.join(import.meta.dirname, 'server', 'data-test'),
         PORT: '3006',
+        // Nothing listens here, for testing without the engine, even if one
+        // is running on this machine
+        VOICEVOX_URL: 'http://127.0.0.1:3009',
       },
     },
     {

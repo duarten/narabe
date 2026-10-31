@@ -23,6 +23,28 @@ Claude Code must be installed and logged in (check with `claude auth status`). E
 
 To develop in this mode, set `CLAUDE_BACKEND=claude-code` in `.env` and run `npm run dev`.
 
+## Speech
+
+Words and sentences are spoken by [VOICEVOX](https://github.com/VOICEVOX/voicevox_engine), which runs locally. It's optional: the game has no speech while the engine isn't running, and picks it up the next time a game is opened after it starts.
+
+Download the engine for your machine from its [releases](https://github.com/VOICEVOX/voicevox_engine/releases/latest) (about 2 GB), then unzip and run it. On an Apple Silicon Mac:
+
+```bash
+curl -fLO https://github.com/VOICEVOX/voicevox_engine/releases/download/0.26.0/voicevox_engine-macos-arm64-0.26.0.vvpp
+unzip voicevox_engine-macos-arm64-0.26.0.vvpp -d voicevox
+cd voicevox && ./run --host 127.0.0.1
+```
+
+Or with Docker:
+
+```bash
+docker run --rm -p '127.0.0.1:50021:50021' voicevox/voicevox_engine:cpu-latest
+```
+
+While playing, tap a word to hear it. Once a sentence is solved or skipped, Play Sentence plays the whole of it, which would give away the order any earlier.
+
+VOICEVOX's terms and each voice's own terms require crediting it, so the game shows the voice's credit below the controls. Check [the voice's terms](https://voicevox.hiroshiba.jp/) before choosing another.
+
 ## Development
 
 ```bash
@@ -60,6 +82,9 @@ npm start  # Runs on port 8080
 - `CLAUDE_CODE_PATH` - Claude Code executable (default: `claude`)
 - `PORT` - Server port (default: 8080 in production, 3001 in dev)
 - `DATA_DIR` - Game storage directory (default: `server/data`)
+- `VOICEVOX_URL` - The VOICEVOX engine (default: `http://127.0.0.1:50021`)
+- `VOICEVOX_SPEAKER` - The voice, as a style id from the engine's `/speakers` (default: `8`, 春日部つむぎ)
+- `TTS_CACHE_DIR` - Where synthesized speech is cached (default: `server/tts-cache`)
 
 ## Furigana
 

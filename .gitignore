@@ -4,5 +4,7 @@ dist/
 .sprite
 server/data/
 server/data-test/
+server/tts-cache/
+server/tts-cache-test/
 test-results/
 playwright-report/

@@ -281,9 +281,14 @@ function SentenceBoard(props) {
   // new places, and settles it into its own before the tile there shows it
   const onPointerUp = (event) => {
     if (event.pointerId !== press.pointerId) return;
+    const pressed = press.id;
     stopListening();
     const id = dragId();
-    if (id === null) return;
+    // It never moved far enough to be a drag
+    if (id === null) {
+      props.onTapWord?.(words()[pressed]);
+      return;
+    }
 
     const to = target();
     setTarget(null);

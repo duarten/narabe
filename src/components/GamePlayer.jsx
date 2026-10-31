@@ -1,5 +1,14 @@
-import { createSignal, createMemo, Show, batch } from 'solid-js';
+import {
+  createSignal,
+  createMemo,
+  createResource,
+  Show,
+  batch,
+  onCleanup,
+} from 'solid-js';
 import SentenceBoard from './SentenceBoard';
+import { fetchVoice } from '../lib/api';
+import { speak, stopSpeaking } from '../lib/speech';
 
 function GamePlayer(props) {
   const [currentIndex, setCurrentIndex] = createSignal(0);
@@ -9,6 +18,23 @@ function GamePlayer(props) {
   const [showReadings, setShowReadings] = createSignal(false);
   const [showMeanings, setShowMeanings] = createSignal(false);
   const [showGrammar, setShowGrammar] = createSignal(false);
+  const [voice] = createResource(fetchVoice);
+  const [speechFailed, setSpeechFailed] = createSignal(false);
+
+  onCleanup(stopSpeaking);
+
+  const say = (text) => {
+    setSpeechFailed(false);
+    speak(text).catch((err) => {
+      console.error('Failed to play speech:', err);
+      setSpeechFailed(true);
+    });
+  };
+
+  const stopSaying = () => {
+    stopSpeaking();
+    setSpeechFailed(false);
+  };
 
   const currentSentence = createMemo(() => {
     if (!props.game?.sentences) return null;
@@ -34,6 +60,7 @@ function GamePlayer(props) {
   // still 'skipped', which would reveal its correct order
   const handleNext = () =>
     batch(() => {
+      stopSaying();
       setCurrentIndex((i) => i + 1);
       setSentenceState('playing');
       setShowReadings(false);
@@ -43,6 +70,7 @@ function GamePlayer(props) {
 
   const handleRestart = () =>
     batch(() => {
+      stopSaying();
       setCurrentIndex(0);
       setCorrectCount(0);
       setSkippedCount(0);
@@ -77,6 +105,7 @@ function GamePlayer(props) {
             showReadings={showReadings()}
             showMeanings={showMeanings()}
             onCorrect={handleCorrect}
+            onTapWord={voice() ? (word) => say(word.word) : undefined}
           />
 
           <div class="controls">
@@ -99,6 +128,15 @@ function GamePlayer(props) {
             </Show>
 
             <Show when={sentenceState() !== 'playing'}>
+              {/* Only now, as hearing the sentence would give away its order */}
+              <Show when={voice()}>
+                <button
+                  class="listen-btn"
+                  onClick={() => say(currentSentence().original)}
+                >
+                  Play Sentence
+                </button>
+              </Show>
               <button
                 class="grammar-btn"
                 onClick={() => setShowGrammar(!showGrammar())}
@@ -110,6 +148,18 @@ function GamePlayer(props) {
               </button>
             </Show>
           </div>
+
+          <Show when={voice()}>
+            <p class="voice-note">
+              <Show when={sentenceState() === 'playing'}>
+                Tap a word to hear it ·{' '}
+              </Show>
+              {voice().credit}
+            </p>
+            <Show when={speechFailed()}>
+              <p class="voice-error">Couldn't play the audio</p>
+            </Show>
+          </Show>
 
           <Show when={showGrammar() && currentSentence()?.grammarBreakdown}>
             <div class="grammar-breakdown">

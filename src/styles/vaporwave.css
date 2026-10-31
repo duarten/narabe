@@ -671,6 +671,32 @@ button:disabled {
   color: var(--dark-purple);
 }
 
+.listen-btn {
+  border-color: var(--green);
+  color: var(--green);
+  background: rgba(5, 255, 161, 0.1);
+}
+
+.listen-btn:hover {
+  background: var(--green);
+  color: var(--dark-purple);
+}
+
+.voice-note,
+.voice-error {
+  font-family: 'Noto Sans JP', 'VT323', sans-serif;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.voice-note {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.voice-error {
+  color: #ff9999;
+}
+
 /* Grammar Breakdown */
 .grammar-breakdown {
   background: rgba(185, 103, 255, 0.1);
