@@ -6,12 +6,14 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:voice\"",
     "dev:server": "node --watch server/index.js",
     "dev:client": "vite",
+    "dev:voice": "node scripts/voice.js --if-installed",
+    "voice": "node scripts/voice.js",
     "build": "vite build",
     "start": "NODE_ENV=production PORT=8080 node server/index.js",
-    "local": "npm run build && CLAUDE_BACKEND=claude-code npm start",
+    "local": "npm run build && CLAUDE_BACKEND=claude-code concurrently --kill-others-on-fail \"npm start\" \"npm run dev:voice\"",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",

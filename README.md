@@ -27,15 +27,13 @@ To develop in this mode, set `CLAUDE_BACKEND=claude-code` in `.env` and run `npm
 
 Words and sentences are spoken by [VOICEVOX](https://github.com/VOICEVOX/voicevox_engine), which runs locally. It's optional: the game has no speech while the engine isn't running, and picks it up the next time a game is opened after it starts.
 
-Download the engine for your machine from its [releases](https://github.com/VOICEVOX/voicevox_engine/releases/latest) (about 2 GB), then unzip and run it. On an Apple Silicon Mac:
-
 ```bash
-curl -fLO https://github.com/VOICEVOX/voicevox_engine/releases/download/0.26.0/voicevox_engine-macos-arm64-0.26.0.vvpp
-unzip voicevox_engine-macos-arm64-0.26.0.vvpp -d voicevox
-cd voicevox && ./run --host 127.0.0.1
+npm run voice  # Installs the engine if need be (about 2 GB), then runs it
 ```
 
-Or with Docker:
+The engine goes in `.voicevox/` (macOS and Linux). To remove it, delete that folder and the few KB of settings the engine keeps in `~/Library/Application Support/voicevox-engine` (on Linux, `~/.local/share/voicevox-engine`). Once installed, `npm run dev` and `npm run local` start it too, so `npm run voice` is only needed once, and can be stopped with Ctrl-C after installing. They leave alone an engine that's already running, such as the VOICEVOX app.
+
+Or run it with Docker instead:
 
 ```bash
 docker run --rm -p '127.0.0.1:50021:50021' voicevox/voicevox_engine:cpu-latest
@@ -84,6 +82,7 @@ npm start  # Runs on port 8080
 - `DATA_DIR` - Game storage directory (default: `server/data`)
 - `VOICEVOX_URL` - The VOICEVOX engine (default: `http://127.0.0.1:50021`)
 - `VOICEVOX_SPEAKER` - The voice, as a style id from the engine's `/speakers` (default: `8`, 春日部つむぎ)
+- `VOICEVOX_DIR` - Where `npm run voice` installs and looks for the engine (default: `.voicevox/<version>`)
 - `TTS_CACHE_DIR` - Where synthesized speech is cached (default: `server/tts-cache`)
 
 ## Furigana

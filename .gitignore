@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 .sprite
+.voicevox/
 server/data/
 server/data-test/
 server/tts-cache/

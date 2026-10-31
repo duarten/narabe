@@ -25,6 +25,8 @@ narabe/
 │   │   ├── claude.js         # Sentence processing via the Claude API or Claude Code
 │   │   └── tts.js            # Speech via the VOICEVOX engine, cached on disk
 │   └── data/                 # Game JSON files stored here
+├── scripts/
+│   └── voice.js              # Installs and runs the VOICEVOX engine
 ├── src/
 │   ├── index.jsx             # Solid.js entry point
 │   ├── App.jsx               # Main app with state-based view switching
@@ -101,6 +103,7 @@ A `<ruby>` shows what the font can't draw: a reading of a lone kanji or a word t
 - **What's sent is the text as written**, not `reading`. The engine reads a lone particle correctly (は → ワ, へ → エ), and `reading` is worse: がくせい comes out ガクセイ where 学生 comes out ガクセエ, and kana can get the wrong pitch accent: 橋 is ハシ' and 箸 is ハ'シ, but はし is always ハ'シ.
 - **Known limitation**: the engine guesses each kanji's reading, so it can disagree with `reading`, mostly for a word on its own: 今日 is always キョオ, even with the reading こんにち, and 人 always ヒト. The fix would be to compare `kana` in the `/audio_query` result to the reading and adjust the query before synthesis.
 - **Playback**: `speech.js` gives an `Audio` the server's URL and plays it within the tap, rather than fetching first, since browsers can refuse to start audio once the gesture has expired. Interrupting a clip rejects `play()` with an `AbortError`, which isn't a failure. Moving on to the next sentence or leaving the game stops the audio.
+- **Running the engine**: `scripts/voice.js` is `npm run voice`, which installs the engine if need be, and with `--if-installed` the part of `npm run dev` and `npm run local` that never downloads. Failing to start then only costs speech, so it exits 0, which also keeps `--kill-others-on-fail` in `npm run local` from stopping the game; that flag is for the reverse, as the engine would otherwise hold the terminal after the server failed to start. The version and each platform's SHA-256 are pinned, since the download gets run. To upgrade, change them all, from the release's asset digests.
 - **The cache has no eviction**. Clips are small (~48KB a second), but on a server open to others the 500-character limit is all that holds back what they can make it synthesize and store.
 
 ### Drag and Drop

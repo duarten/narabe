@@ -33,7 +33,9 @@ const json = (res, body) => {
 http
   .createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
-    if (url.pathname === '/speakers') {
+    if (url.pathname === '/version') {
+      json(res, '0.0.0');
+    } else if (url.pathname === '/speakers') {
       json(res, [
         { name: '別の声', styles: [{ name: 'ノーマル', id: 1 }] },
         { name: '春日部つむぎ', styles: [{ name: 'ノーマル', id: 8 }] },
